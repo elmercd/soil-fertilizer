@@ -21,6 +21,7 @@ class NavWalker extends \Walker_Nav_Menu {
   public function __construct() {
     add_filter('nav_menu_css_class', array($this, 'cssClasses'), 10, 2);
     add_filter('nav_menu_item_id', '__return_null');
+    add_filter( 'nav_menu_link_attributes', array($this, 'linkAttr'), 10, 3 );
     $cpt = get_post_type();
     $this->cpt = in_array($cpt, get_post_types(array('_builtin' => false)));
     $this->archive = get_post_type_archive_link($cpt);
@@ -40,7 +41,7 @@ class NavWalker extends \Walker_Nav_Menu {
     parent::start_el($item_html, $item, $depth, $args);
 
     if ($item->is_dropdown && ($depth === 0)) {
-      $item_html = str_replace('<a', '<a class="dropdown-toggle" data-toggle="dropdown" data-target="#"', $item_html);
+      $item_html = str_replace('<a', '<a class="dropdown-toggle nav-link" data-toggle="dropdown" data-target="#"', $item_html);
       $item_html = str_replace('</a>', ' <b class="caret"></b></a>', $item_html);
     } elseif (stristr($item_html, 'li class="divider')) {
       $item_html = preg_replace('/<a[^>]*>.*?<\/a>/iU', '', $item_html);
@@ -88,7 +89,7 @@ class NavWalker extends \Walker_Nav_Menu {
     }
 
     $classes = preg_replace('/(current(-menu-|[-_]page[-_])(item|parent|ancestor))/', 'active', $classes);
-    $classes = preg_replace('/^((menu|page)[-_\w+]+)+/', '', $classes);
+    $classes = preg_replace('/^((menu|page)[-_\w+]+)+/', 'nav-item', $classes);
 
     $classes[] = 'menu-' . $slug;
 
@@ -98,6 +99,15 @@ class NavWalker extends \Walker_Nav_Menu {
       $element = trim($element);
       return !empty($element);
     });
+  }
+
+  public function linkAttr( $atts, $item, $args ) {
+    if ($item->menu_item_parent === '0') {
+      $atts['class'] = 'nav-link';
+    } else {
+      $atts['class'] = 'dropdown-item';
+    }
+    return $atts;
   }
 }
 
